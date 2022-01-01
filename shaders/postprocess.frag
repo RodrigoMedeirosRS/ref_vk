@@ -20,11 +20,47 @@ void main()
 {
 	vec2 unnormTexCoord = texCoord * vec2(pc.scrWidth, pc.scrHeight) + vec2(pc.offsetX, pc.offsetY);
 
-	// apply any additional world-only postprocessing effects here (if enabled)
 	if (pc.postprocess > 0.0)
 	{
-		//gamma + color intensity bump
-		fragmentColor = vec4(pow(textureLod(sTexture, unnormTexCoord, 0.0).rgb * 1.5, vec3(pc.gamma)), 1.0);
+		float intensity = 1;
+		float blurSize = 1.0/pc.scrHeight;
+		vec4 sum = vec4(0);
+   		vec2 texcoordBloom = vec2(texCoord.x/pc.scrWidth, texCoord.y/pc.scrHeight);
+		int j = 0;
+   		int i = 0;
+
+		float distanceToCenter = distance(texCoord, vec2(0.5, 0.5));
+		float distortionAmount = 1.5 * distanceToCenter * float(2);
+    	float dist = float(distance(texCoord, vec2(0,5)) * 0.001);
+
+		sum += texture(sTexture, vec2(texcoordBloom.x - 4.0*blurSize, texcoordBloom.y)) * 0.05;
+   		sum += texture(sTexture, vec2(texcoordBloom.x - 3.0*blurSize, texcoordBloom.y)) * 0.09;
+		sum += texture(sTexture, vec2(texcoordBloom.x - 2.0*blurSize, texcoordBloom.y)) * 0.12;
+		sum += texture(sTexture, vec2(texcoordBloom.x - blurSize, texcoordBloom.y)) * 0.15;
+		sum += texture(sTexture, vec2(texcoordBloom.x, texcoordBloom.y)) * 0.16;
+		sum += texture(sTexture, vec2(texcoordBloom.x + blurSize, texcoordBloom.y)) * 0.15;
+		sum += texture(sTexture, vec2(texcoordBloom.x + 2.0*blurSize, texcoordBloom.y)) * 0.12;
+		sum += texture(sTexture, vec2(texcoordBloom.x + 3.0*blurSize, texcoordBloom.y)) * 0.09;
+		sum += texture(sTexture, vec2(texcoordBloom.x + 4.0*blurSize, texcoordBloom.y)) * 0.05;
+
+		sum += texture(sTexture, vec2(texcoordBloom.x, texcoordBloom.y - 4.0*blurSize)) * 0.05;
+		sum += texture(sTexture, vec2(texcoordBloom.x, texcoordBloom.y - 3.0*blurSize)) * 0.09;
+		sum += texture(sTexture, vec2(texcoordBloom.x, texcoordBloom.y - 2.0*blurSize)) * 0.12;
+		sum += texture(sTexture, vec2(texcoordBloom.x, texcoordBloom.y - blurSize)) * 0.15;
+		sum += texture(sTexture, vec2(texcoordBloom.x, texcoordBloom.y)) * 0.16;
+		sum += texture(sTexture, vec2(texcoordBloom.x, texcoordBloom.y + blurSize)) * 0.15;
+		sum += texture(sTexture, vec2(texcoordBloom.x, texcoordBloom.y + 2.0*blurSize)) * 0.12;
+		sum += texture(sTexture, vec2(texcoordBloom.x, texcoordBloom.y + 3.0*blurSize)) * 0.09;
+		sum += texture(sTexture, vec2(texcoordBloom.x, texcoordBloom.y + 4.0*blurSize)) * 0.05;
+
+		//fragmentColor.r = pow(textureLod(sTexture,unnormTexCoord + vec2(distortionAmount * dist, 0.0), pc.blur).r * 1.5, pc.gamma);  
+		//fragmentColor.g = pow(textureLod(sTexture,unnormTexCoord, pc.blur).g * 1.5, pc.gamma);
+		//fragmentColor.b = pow(textureLod(sTexture,unnormTexCoord - vec2(distortionAmount * dist, 0.0), pc.blur).b * 1.5, pc.gamma);
+
+		fragmentColor.r = pow(textureLod(sTexture,unnormTexCoord + vec2(distortionAmount * dist, 0.0), 1.5).r * 1.5, pc.gamma);  
+		fragmentColor.g = pow(textureLod(sTexture,unnormTexCoord, 1.5).g * 1.5, pc.gamma);
+		fragmentColor.b = pow(textureLod(sTexture,unnormTexCoord - vec2(distortionAmount * dist, 0.0), 1.5).b * 1.5, pc.gamma);
+
 	}
 	else
 	{
